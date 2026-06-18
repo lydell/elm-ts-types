@@ -3,8 +3,12 @@ export function doIt(code) {
     var scope = {};
     f.call(scope);
     var { Elm } = scope;
-    // TODO: Dynamically go through everything
-    console.dir(Elm.Main.init(), {depth: null});
+    // TODO: Proper recursive thing
+    for (const key of Object.keys(Elm)) {
+        console.log(key);
+        console.dir(Elm[key].init(), {depth: null});
+    }
+    // TODO: Should there be one interface per namespace? Use actual namespaces?
     return "hi";
 }
 
@@ -33,12 +37,22 @@ var proxy = new Proxy({}, {
 function _Platform_initialize(flagDecoder, args, init, update, subscriptions, stepperBuilder)
 {
 	var ports = _Platform_setupEffects({}, function () {});
+    var code = stepperBuilder.toString();
 	return {
-        flagDecoder: decoderToString(flagDecoder),
+        flagDecoder: flagDecoder.$ === 0 ? null : decoderToString(flagDecoder),
         ports: ports,
-        body: stepperBuilder.toString().indexOf("body") !== -1
+        mount: code.indexOf("body") !== -1 ? "body" : code.indexOf("node") !== -1 ? "node" : "none"
     };
 }
+
+var _VirtualDom_init = F4(function(virtualNode, flagDecoder, debugMetadata, args)
+{
+	return {
+        flagDecoder: null,
+        ports: null,
+        mount: "node"
+    };
+});
 
 function _Platform_setupIncomingPort(name) {
 	return {
