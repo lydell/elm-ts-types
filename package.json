@@ -2,6 +2,6 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "elm": "elm make --output elm.js test/Application.elm test/Document.elm test/Element.elm test/Html_.elm test/Sandbox.elm test/Worker.elm"
+        "elm": "elm make --output elm.js test/Application.elm test/Document.elm test/DocumentNoFlagsNoPorts.elm test/Element.elm test/Html_.elm test/Sandbox.elm test/Worker.elm"
     }
 }

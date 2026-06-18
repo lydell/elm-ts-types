@@ -5,8 +5,7 @@ export function doIt(code) {
     var { Elm } = scope;
     // TODO: Proper recursive thing
     for (const key of Object.keys(Elm)) {
-        console.log(key);
-        console.dir(Elm[key].init(), {depth: null});
+        console.log(key, Elm[key].init());
     }
     // TODO: Should there be one interface per namespace? Use actual namespaces?
     return "hi";
@@ -37,21 +36,39 @@ var proxy = new Proxy({}, {
 function _Platform_initialize(flagDecoder, args, init, update, subscriptions, stepperBuilder)
 {
 	var ports = _Platform_setupEffects({}, function () {});
-    var code = stepperBuilder.toString();
-	return {
-        flagDecoder: flagDecoder.$ === 0 ? null : decoderToString(flagDecoder),
-        ports: ports,
-        mount: code.indexOf("body") !== -1 ? "body" : code.indexOf("node") !== -1 ? "node" : "none"
-    };
+    var argsLines = [];
+    if (stepperBuilder.toString().indexOf("'node'") !== -1) {
+        argsLines.push("  node: Node");
+    }
+    if (flagDecoder.$ !== 0) {
+        argsLines.push("  flags: " + decoderToString(flagDecoder));
+    }
+    var argsString =
+        argsLines.length === 0
+            ? ""
+            : "args: {\\n" + argsLines.join(",\\n") + "\\n}";
+    var portsString = "";
+    if (ports) {
+        for (var key in ports) {
+            var port = ports[key];
+            // TODO: Should subscribe require Promise<void>?
+            var portString =
+                port.type === "incoming"
+                    ? "{\\n        send: (value: " + port.value + ") => void\\n      }"
+                    : "{\\n        subscribe: (f: (value: " + port.value + ") => void) => void\\n        unsubscribe: (f: (value: " + port.value + ") => void) => void\\n      }";
+            portsString += "\\n      " + JSON.stringify(key) + ": " + portString + ",";
+        }
+    }
+    var returnTypeString =
+        ports
+            ? "{\\n    ports: {" + portsString + "\\n    }\\n  }"
+            : "Record<string, never>";
+    return "export function init(" + argsString + "): " + returnTypeString;
 }
 
 var _VirtualDom_init = F4(function(virtualNode, flagDecoder, debugMetadata, args)
 {
-	return {
-        flagDecoder: null,
-        ports: null,
-        mount: "node"
-    };
+    return "export function init(args: { node: Node }): Record<string, never>;"
 });
 
 function _Platform_setupIncomingPort(name) {
