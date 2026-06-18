@@ -9,7 +9,11 @@ export function doIt(code) {
 }
 
 function inject(code) {
-  return preamble + code.replace(/^_Platform_export\(/m, (match) => `${injection}\n${match}`);
+  return preamble +
+    code
+        // Delay port decoder construction until our injection has run.
+        .replace(/_Platform_incomingPort\(\s+'[^']+',/g, "$& () =>")
+        .replace(/^_Platform_export\(/m, (match) => `${injection}\n${match}`);
 }
 
 const preamble = `
@@ -40,7 +44,7 @@ function _Platform_setupIncomingPort(name) {
 	return {
         type: "incoming",
         name: name,
-        value: decoderToString(_Platform_effectManagers[name].u)
+        value: decoderToString(_Platform_effectManagers[name].u())
     };
 }
 
@@ -112,7 +116,6 @@ var $elm$core$Maybe$destruct = F3(
         return _Json_wrap(_Json_unwrap(func(proxy)) + " | " + _Json_unwrap(_default));
 	});
 
-// TODO: This wins over flagsDecoder but not port
 var $elm$json$Json$Decode$andThen = F2(function(callback, decoder)
 {
     var next = callback(proxy);
@@ -188,6 +191,7 @@ function decoderToString(decoder) {
             return decoder.value;
         default:
             // throw new Error("Unknown decoder.$: " + decoder.$);
+            console.log("other", decoder);
             return "other";
     }
 }
