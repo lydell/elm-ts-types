@@ -87,7 +87,7 @@ var $elm$json$Json$Encode$list = F2(
             output += "]";
 			return _Json_wrap(output);
         } else {
-            return "Array<" + _Json_unwrap(func(proxy)) + ">";
+            return _Json_wrap("Array<" + _Json_unwrap(func(proxy)) + ">");
         }
 	});
 
@@ -190,9 +190,7 @@ function decoderToString(decoder) {
         case "primitive":
             return decoder.value;
         default:
-            // throw new Error("Unknown decoder.$: " + decoder.$);
-            console.log("other", decoder);
-            return "other";
+            throw new Error("Unknown decoder.$: " + decoder.$);
     }
 }
 `.trim();
