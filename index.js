@@ -105,6 +105,11 @@ var $elm$json$Json$Encode$list = F2(
         }
 	});
 
+var $elm$json$Json$Encode$array = F2(
+	function (func, entries) {
+        return _Json_wrap("Array<" + _Json_unwrap(func(proxy)) + ">");
+	});
+
 var $elm$json$Json$Encode$object = function (pairs) {
 	var object = A3(
         $elm$core$List$foldl,
@@ -154,6 +159,10 @@ var $elm$json$Json$Decode$list = function (decoder) {
     return { $: "list", value: decoder };
 };
 
+var $elm$json$Json$Decode$array = function (decoder) {
+    return { $: "array", value: decoder };
+};
+
 var $elm$json$Json$Decode$field = F2(function(field, decoder)
 {
     var object = {};
@@ -198,6 +207,8 @@ function decoderToString(decoder) {
             output += "]";
             return output;
         case "list":
+            return "Array<" + decoderToString(decoder.value) + ">";
+        case "array":
             return "Array<" + decoderToString(decoder.value) + ">";
         case "oneOf":
             return decoder.alternatives.map(decoderToString).join(" | ");
