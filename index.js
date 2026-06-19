@@ -39,7 +39,7 @@ function toArgs({flagDecoder, usesNodeOption}) {
     const args = [
         ...(flagDecoder === null
             ? []
-            : [["flags", flagDecoder]]
+            : [["flags", toType(flagDecoder)]]
         ),
         ...(usesNodeOption
             ? [["node", "Node"]]
@@ -58,18 +58,37 @@ function toPortsType(ports) {
         Object.entries(ports)
             .map(([name, port]) =>
                 port.type === "incoming"
-                    ? `{
-        send: (value: ${port.value}) => void
-    }`
-                    : `{
-        subscribe: (f: (value: ${port.value}) => void) => void,
-        unsubscribe: (f: (value: ${port.value}) => void) => void
-    }`
+                    ? `        ${name}: {
+            send: (value: ${toType(port.value)}) => void
+        }`
+                    : `        ${name}: {
+            subscribe: (f: (value: ${toType(port.value)}) => void) => void,
+            unsubscribe: (f: (value: ${toType(port.value)}) => void) => void
+        }`
             )
             .join(",\n");
     return `{
 ${portsString}
     }`;
+}
+
+function toType(type) {
+    switch (type.$) {
+        case "object":
+            return `{ ${Object.entries(type.value).sort(([keyA], [keyB]) => keyA.localeCompare(keyB)).map(([key, value]) => `${JSON.stringify(key)}: ${toType(value)}`).join(", ")} }`;
+        case "tuple":
+            return `[ ${Object.values(type.value).map(toType).join(", ")} ]`;
+        case "list":
+            return `Array<${toType(type.value)}>`;
+        case "array":
+            return `Array<${toType(type.value)}>`;
+        case "oneOf":
+            return type.alternatives.map(toType).join(" | ");
+        case "primitive":
+            return type.value;
+        default:
+            throw new Error("Unknown type.$: " + type.$);
+    }
 }
 
 function extract(code) {
@@ -104,7 +123,7 @@ const proxy = new Proxy({}, {
 function _Platform_initialize(flagDecoder, args, init, update, subscriptions, stepperBuilder) {
     const ports = _Platform_setupEffects({}, () => {});
     return {
-        flagDecoder: flagDecoder.$ === 0 ? null : decoderToString(flagDecoder),
+        flagDecoder: flagDecoder.$ === 0 ? null : flagDecoder,
         ports: ports ?? null,
         usesNodeOption: stepperBuilder.toString().includes("'node'"),
     };
@@ -121,63 +140,53 @@ var _VirtualDom_init = F4(function(virtualNode, flagDecoder, debugMetadata, args
 function _Platform_setupIncomingPort(name) {
     return {
         type: "incoming",
-        value: decoderToString(_Platform_effectManagers[name].u())
+        value: _Platform_effectManagers[name].u()
     };
 }
 
 function _Platform_setupOutgoingPort(name) {
     return {
         type: "outgoing",
-        value: _Json_unwrap(_Platform_effectManagers[name].u(proxy))
+        value: _Platform_effectManagers[name].u(proxy)
     };
 }
 
-var $elm$core$Basics$identity = () => _Json_wrap("unknown");
-var $elm$json$Json$Encode$null = _Json_wrap("null");
-var $elm$json$Json$Encode$bool = () => _Json_wrap("boolean");
-var $elm$json$Json$Encode$int = () => _Json_wrap("number");
-var $elm$json$Json$Encode$float = () => _Json_wrap("float");
-var $elm$json$Json$Encode$string = () => _Json_wrap("string");
+var $elm$json$Json$Encode$null = { $: "primitive", value: "null" };
+var $elm$json$Json$Encode$bool = () => ({ $: "primitive", value: "boolean" });
+var $elm$json$Json$Encode$int = () => ({ $: "primitive", value: "number" });
+var $elm$json$Json$Encode$float = () => ({ $: "primitive", value: "float" });
+var $elm$json$Json$Encode$string = () => ({ $: "primitive", value: "string" });
+var $elm$core$Basics$identity = () => ({ $: "primitive", value: "unknown" });
 
 var $elm$json$Json$Encode$list = F2(function (func, entries) {
     if (func === $elm$core$Basics$identity) {
-        let output = "[";
-        for (; entries.b; entries = entries.b) // WHILE_CONS
+        const object = {};
+        for (let i = 0; entries.b; entries = entries.b, i++) // WHILE_CONS
         {
-            output += _Json_unwrap(entries.a) + ", ";
+            object[i] = entries.a;
         }
-        output += "]";
-        return _Json_wrap(output);
+        return { $: "tuple", value: object };
     } else {
-        return _Json_wrap("Array<" + _Json_unwrap(func(proxy)) + ">");
+        return { $: "array", value: func(proxy) };
     }
 });
 
 var $elm$json$Json$Encode$array = F2(function (func, entries) {
-    return _Json_wrap("Array<" + _Json_unwrap(func(proxy)) + ">");
+    return { $: "array", value: func(proxy) };
 });
 
 var $elm$json$Json$Encode$object = function (pairs) {
-    var object = A3(
+    const object = A3(
         $elm$core$List$foldl,
-        F2(function (_v0, obj) {
-            var k = _v0.a;
-            var v = _v0.b;
-            return A3(_Json_addField, k, v, obj);
-        }),
+        F2((_v0, obj) => A3(_Json_addField, _v0.a, _Json_wrap(_v0.b), obj)),
         _Json_emptyObject(_Utils_Tuple0),
         pairs
     );
-    var output = "{ ";
-    for (var key in object) {
-        output += JSON.stringify(key) + ": " + object[key] + ", ";
-    }
-    output += "}";
-    return _Json_wrap(output);
+    return { $: "object", value: object };
 };
 
 var $elm$core$Maybe$destruct = F3(function (_default, func, maybe) {
-    return _Json_wrap(_Json_unwrap(func(proxy)) + " | " + _Json_unwrap(_default));
+    return { $: "oneOf", alternatives: [func(proxy), _default] };
 });
 
 var $elm$json$Json$Decode$andThen = F2(function(callback, decoder) {
@@ -185,13 +194,13 @@ var $elm$json$Json$Decode$andThen = F2(function(callback, decoder) {
     if (next.$ === 0) {
         return decoder;
     }
-    for (var key in next.value) {
+    for (let key in next.value) {
         decoder.value[key] = next.value[key];
     }
     return decoder;
 });
 
-var $elm$json$Json$Decode$null = function () { return { $: "primitive", value: "null" }; };
+var $elm$json$Json$Decode$null = () => ({ $: "primitive", value: "null" });
 var $elm$json$Json$Decode$bool = { $: "primitive", value: "boolean" };
 var $elm$json$Json$Decode$int = { $: "primitive", value: "number" };
 var $elm$json$Json$Decode$float = { $: "primitive", value: "number" };
@@ -207,54 +216,18 @@ var $elm$json$Json$Decode$array = function (decoder) {
 };
 
 var $elm$json$Json$Decode$field = F2(function(field, decoder) {
-    var object = {};
-    object[field] = decoder;
-    return { $: "object", value: object };
+    return { $: "object", value: { [field]: decoder } };
 });
 
 var $elm$json$Json$Decode$index = F2(function(index, decoder) {
-    var object = {};
-    object[index] = decoder;
-    return { $: "tuple", value: object };
+    return { $: "tuple", value: { [index]: decoder } };
 });
 
 var $elm$json$Json$Decode$oneOf = function (decoders) {
-    return {
-        $: "oneOf",
-        alternatives: _List_toArray(decoders)
-    };
+    return { $: "oneOf", alternatives: _List_toArray(decoders) };
 };
 
 var $elm$json$Json$Decode$map = F2(function(f, d1) {
     return d1;
 });
-
-function decoderToString(decoder) {
-    switch (decoder.$) {
-        case "object":
-            var output = "{ ";
-            for (var key in decoder.value) {
-                output += JSON.stringify(key) + ": " + decoderToString(decoder.value[key]) + ", ";
-            }
-            output += "}";
-            return output;
-        case "tuple":
-            var output = "[ ";
-            for (var key in decoder.value) {
-                output += decoderToString(decoder.value[key]) + ", ";
-            }
-            output += "]";
-            return output;
-        case "list":
-            return "Array<" + decoderToString(decoder.value) + ">";
-        case "array":
-            return "Array<" + decoderToString(decoder.value) + ">";
-        case "oneOf":
-            return decoder.alternatives.map(decoderToString).join(" | ");
-        case "primitive":
-            return decoder.value;
-        default:
-            throw new Error("Unknown decoder.$: " + decoder.$);
-    }
-}
 `.trim();
