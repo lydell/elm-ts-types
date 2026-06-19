@@ -1,7 +1,9 @@
 import fs from "fs";
-import { doIt } from "./index.js";
+import { toSeparateDefinitions } from "./index.js";
 
-const code = fs.readFileSync(process.stdin.fd, "utf-8");
-const output = doIt(code);
+const code = fs.readFileSync("elm.js", "utf-8");
+const output = toSeparateDefinitions(code);
 
-process.stdout.write(output);
+for (const [key, value] of Object.entries(output)) {
+    console.log(key, value);
+}

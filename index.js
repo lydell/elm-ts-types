@@ -1,14 +1,82 @@
-export function doIt(code) {
-    var f = new Function(inject(code));
-    var scope = {};
-    f.call(scope);
-    var { Elm } = scope;
-    // TODO: Proper recursive thing
-    for (const key of Object.keys(Elm)) {
-        console.log(key, Elm[key].init());
+export function toWindowDefinition(code) {
+}
+
+export function toStandaloneDefinition(code) {
+}
+
+export function toSeparateDefinitions(code) {
+    const Elm = extract(code);
+    const definitions = {};
+    toSeparateDefinitionsHelper("Elm", Elm, definitions);
+    return definitions;
+}
+
+function toSeparateDefinitionsHelper(name, exports, definitions) {
+    for (const [key, value] of Object.entries(exports)) {
+        if (key === "init") {
+            definitions[name] = toDefinition(value());
+        } else {
+            toSeparateDefinitionsHelper(`${name}.${key}`, value, definitions);
+        }
     }
-    // TODO: Should there be one interface per namespace? Use actual namespaces?
-    return "hi";
+}
+
+function toDefinition({flagDecoder, ports, usesNodeOption}) {
+    const args =
+        flagDecoder === null && !usesNodeOption
+            ? ""
+            : `args: ${toArgs({flagDecoder, usesNodeOption})}`;
+    const returnType =
+        ports === null
+            ? "Record<string, never>"
+            : `{
+    ports: ${toPortsType(ports)}
+}`;
+    return `export function init(${args}): ${returnType};`;
+}
+
+function toArgs({flagDecoder, usesNodeOption}) {
+    const args = [
+        ...(flagDecoder === null
+            ? []
+            : [["flags", flagDecoder]]
+        ),
+        ...(usesNodeOption
+            ? [["node", "Node"]]
+            : []
+        ),
+    ]
+        .map(([key, value]) => `    ${key}: ${value}`)
+        .join(",\n");
+    return `{
+${args}
+}`;
+}
+
+function toPortsType(ports) {
+    const portsString =
+        Object.entries(ports)
+            .map(([name, port]) =>
+                port.type === "incoming"
+                    ? `{
+        send: (value: ${port.value}) => void
+    }`
+                    : `{
+        subscribe: (f: (value: ${port.value}) => void) => void,
+        unsubscribe: (f: (value: ${port.value}) => void) => void
+    }`
+            )
+            .join(",\n");
+    return `{
+${portsString}
+    }`;
+}
+
+function extract(code) {
+    const f = new Function(inject(code));
+    const scope = {};
+    f.call(scope);
+    return scope.Elm;
 }
 
 function inject(code) {
@@ -36,45 +104,25 @@ var proxy = new Proxy({}, {
 function _Platform_initialize(flagDecoder, args, init, update, subscriptions, stepperBuilder)
 {
 	var ports = _Platform_setupEffects({}, function () {});
-    var argsLines = [];
-    if (stepperBuilder.toString().indexOf("'node'") !== -1) {
-        argsLines.push("  node: Node");
-    }
-    if (flagDecoder.$ !== 0) {
-        argsLines.push("  flags: " + decoderToString(flagDecoder));
-    }
-    var argsString =
-        argsLines.length === 0
-            ? ""
-            : "args: {\\n" + argsLines.join(",\\n") + "\\n}";
-    var portsString = "";
-    if (ports) {
-        for (var key in ports) {
-            var port = ports[key];
-            // TODO: Should subscribe require Promise<void>?
-            var portString =
-                port.type === "incoming"
-                    ? "{\\n        send: (value: " + port.value + ") => void\\n      }"
-                    : "{\\n        subscribe: (f: (value: " + port.value + ") => void) => void\\n        unsubscribe: (f: (value: " + port.value + ") => void) => void\\n      }";
-            portsString += "\\n      " + JSON.stringify(key) + ": " + portString + ",";
-        }
-    }
-    var returnTypeString =
-        ports
-            ? "{\\n    ports: {" + portsString + "\\n    }\\n  }"
-            : "Record<string, never>";
-    return "export function init(" + argsString + "): " + returnTypeString;
+    return {
+        flagDecoder: flagDecoder.$ === 0 ? null : decoderToString(flagDecoder),
+        ports: ports || null,
+        usesNodeOption: stepperBuilder.toString().indexOf("'node'") !== -1,
+    };
 }
 
 var _VirtualDom_init = F4(function(virtualNode, flagDecoder, debugMetadata, args)
 {
-    return "export function init(args: { node: Node }): Record<string, never>;"
+    return {
+        flagDecoder: null,
+        ports: null,
+        usesNodeOption: true,
+    };
 });
 
 function _Platform_setupIncomingPort(name) {
 	return {
         type: "incoming",
-        name: name,
         value: decoderToString(_Platform_effectManagers[name].u())
     };
 }
@@ -82,7 +130,6 @@ function _Platform_setupIncomingPort(name) {
 function _Platform_setupOutgoingPort(name) {
 	return {
         type: "outgoing",
-        name: name,
         value: _Json_unwrap(_Platform_effectManagers[name].u(proxy))
     };
 }
