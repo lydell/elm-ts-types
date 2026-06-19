@@ -115,9 +115,7 @@ var console = {
 
 const injection = `
 const proxy = new Proxy({}, {
-    get() {
-        return proxy;
-    }
+    get: () => proxy,
 });
 
 function _Platform_initialize(flagDecoder, args, init, update, subscriptions, stepperBuilder) {
@@ -140,14 +138,14 @@ var _VirtualDom_init = F4(function(virtualNode, flagDecoder, debugMetadata, args
 function _Platform_setupIncomingPort(name) {
     return {
         type: "incoming",
-        value: _Platform_effectManagers[name].u()
+        value: _Platform_effectManagers[name].u(),
     };
 }
 
 function _Platform_setupOutgoingPort(name) {
     return {
         type: "outgoing",
-        value: _Platform_effectManagers[name].u(proxy)
+        value: _Platform_effectManagers[name].u(proxy),
     };
 }
 
@@ -161,8 +159,7 @@ var $elm$core$Basics$identity = () => ({ $: "primitive", value: "unknown" });
 var $elm$json$Json$Encode$list = F2(function (func, entries) {
     if (func === $elm$core$Basics$identity) {
         const object = {};
-        for (let i = 0; entries.b; entries = entries.b, i++) // WHILE_CONS
-        {
+        for (let i = 0; entries.b; entries = entries.b, i++) {
             object[i] = entries.a;
         }
         return { $: "tuple", value: object };
@@ -189,17 +186,6 @@ var $elm$core$Maybe$destruct = F3(function (_default, func, maybe) {
     return { $: "oneOf", alternatives: [func(proxy), _default] };
 });
 
-var $elm$json$Json$Decode$andThen = F2(function(callback, decoder) {
-    const next = callback(proxy);
-    if (next.$ === 0) {
-        return decoder;
-    }
-    for (let key in next.value) {
-        decoder.value[key] = next.value[key];
-    }
-    return decoder;
-});
-
 var $elm$json$Json$Decode$null = () => ({ $: "primitive", value: "null" });
 var $elm$json$Json$Decode$bool = { $: "primitive", value: "boolean" };
 var $elm$json$Json$Decode$int = { $: "primitive", value: "number" };
@@ -221,6 +207,17 @@ var $elm$json$Json$Decode$field = F2(function(field, decoder) {
 
 var $elm$json$Json$Decode$index = F2(function(index, decoder) {
     return { $: "tuple", value: { [index]: decoder } };
+});
+
+var $elm$json$Json$Decode$andThen = F2(function(callback, decoder) {
+    const next = callback(proxy);
+    if (next.$ === 0) {
+        return decoder;
+    }
+    for (let key in next.value) {
+        decoder.value[key] = next.value[key];
+    }
+    return decoder;
 });
 
 var $elm$json$Json$Decode$oneOf = function (decoders) {
