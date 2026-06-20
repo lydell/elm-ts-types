@@ -54,8 +54,8 @@ function toPortsType(ports, i) {
 ${indent(i + 2)}send: (value: ${toType(port.value, i + 2)}) => void
 ${indent(i + 1)}}`
                     : `${indent(i + 1)}${name}: {
-${indent(i + 2)}subscribe: (f: (value: ${toType(port.value, i + 2)}) => void) => void,
-${indent(i + 2)}unsubscribe: (f: (value: ${toType(port.value, i + 2)}) => void) => void
+${indent(i + 2)}subscribe: (f: (value: ${toType(port.value, i + 2)}) => Promise<void>) => void,
+${indent(i + 2)}unsubscribe: (f: (value: ${toType(port.value, i + 2)}) => Promise<void>) => void
 ${indent(i + 1)}}`
             )
             .join(",\n");
