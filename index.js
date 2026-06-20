@@ -5,7 +5,15 @@ export function generateTypeScript(code) {
 
 function generateTypeScriptHelper(name, exports, i) {
     return `${indent(i)}namespace ${name} {
-${Object.entries(exports).map(([key, value]) => key === "init" ? toDefinition(value(), i + 1) : generateTypeScriptHelper(key, value, i + 1)).join("\n\n")}
+${
+    Object.entries(exports)
+        .map(([key, value]) =>
+            key === "init"
+                ? toDefinition(value(), i + 1)
+                : generateTypeScriptHelper(key, value, i + 1)
+        )
+        .join("\n\n")
+}
 ${indent(i)}}`
 }
 
@@ -49,7 +57,7 @@ function toPortsType(ports, i) {
     const portsString =
         Object.entries(ports)
             .map(([name, port]) =>
-                port.type === "incoming"
+                port.$ === "incoming"
                     ? `${indent(i + 1)}${name}: {
 ${indent(i + 2)}send: (value: ${toType(port.value, i + 2)}) => void
 ${indent(i + 1)}}`
@@ -71,7 +79,12 @@ function toType(type, i) {
             return entries.length === 1
                 ? `{ ${toKeyValue(entries[0], 0)} }`
                 : `{
-${Object.entries(type.value).sort(([keyA], [keyB]) => keyA.localeCompare(keyB)).map(entry => toKeyValue(entry, i + 1)).join(",\n")}
+${
+    Object.entries(type.value)
+        .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
+        .map(entry => toKeyValue(entry, i + 1))
+        .join(",\n")
+}
 ${indent(i)}}`;
         case "tuple":
             return `[ ${Object.values(type.value).map(value => toType(value, i)).join(", ")} ]`;
@@ -104,7 +117,7 @@ function inject(code) {
     code
         // Delay port decoder construction until our injection has run.
         .replace(/_Platform_incomingPort\(\s+'[^']+',/g, "$& () =>")
-        .replace(/^_Platform_export\(/m, (match) => `${injection}\n${match}`);
+        .replace(/^_Platform_export\(/m, `${injection}\n$&`);
 }
 
 const preamble = `
@@ -138,14 +151,14 @@ var _VirtualDom_init = F4(function(virtualNode, flagDecoder, debugMetadata, args
 
 function _Platform_setupIncomingPort(name) {
     return {
-        type: "incoming",
+        $: "incoming",
         value: _Platform_effectManagers[name].u(),
     };
 }
 
 function _Platform_setupOutgoingPort(name) {
     return {
-        type: "outgoing",
+        $: "outgoing",
         value: _Platform_effectManagers[name].u(proxy),
     };
 }
