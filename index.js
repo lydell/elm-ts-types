@@ -1,82 +1,95 @@
 export function generateTypeScript(code) {
     const Elm = extract(code);
-    return `declare ${generateTypeScriptHelper("Elm", Elm, "    ")}`;
+    return `declare ${generateTypeScriptHelper("Elm", Elm, 0)}`;
 }
 
-function generateTypeScriptHelper(name, exports, indent) {
-    return `namespace ${name} {
-${Object.entries(exports).map(([key, value]) => key === "init" ? toDefinition(value()) : generateTypeScriptHelper(key, value, indent + "    ")).join("\n\n").split("\n").map(line => indent + line).join("\n")}
-}`
+function generateTypeScriptHelper(name, exports, i) {
+    return `${indent(i)}namespace ${name} {
+${Object.entries(exports).map(([key, value]) => key === "init" ? toDefinition(value(), i + 1) : generateTypeScriptHelper(key, value, i + 1)).join("\n\n")}
+${indent(i)}}`
 }
 
-function toDefinition({flagDecoder, ports, usesNodeOption}) {
+function indent(i) {
+    return "    ".repeat(i);
+}
+
+function toDefinition({flagDecoder, ports, usesNodeOption}, i) {
     const args =
         flagDecoder === null && !usesNodeOption
             ? ""
-            : `args: ${toArgs({flagDecoder, usesNodeOption})}`;
+            : `args: ${toArgs({flagDecoder, usesNodeOption}, i)}`;
     const returnType =
         ports === null
             ? "Record<string, never>"
             : `{
-    ports: ${toPortsType(ports)}
-}`;
-    return `export function init(${args}): ${returnType};`;
+${indent(i + 1)}ports: ${toPortsType(ports, i + 1)}
+${indent(i)}}`;
+    return `${indent(i)}export function init(${args}): ${returnType};`;
 }
 
-function toArgs({flagDecoder, usesNodeOption}) {
+function toArgs({flagDecoder, usesNodeOption}, i) {
     const args = [
         ...(flagDecoder === null
             ? []
-            : [["flags", toType(flagDecoder)]]
+            : [["flags", toType(flagDecoder, i)]]
         ),
         ...(usesNodeOption
             ? [["node", "Node"]]
             : []
         ),
     ]
-        .map(([key, value]) => `    ${key}: ${value}`)
+        .map(([key, value]) => `${indent(i + 1)}${key}: ${value}`)
         .join(",\n");
     return `{
 ${args}
-}`;
+${indent(i)}}`;
 }
 
-function toPortsType(ports) {
+function toPortsType(ports, i) {
     const portsString =
         Object.entries(ports)
             .map(([name, port]) =>
                 port.type === "incoming"
-                    ? `        ${name}: {
-            send: (value: ${toType(port.value)}) => void
-        }`
-                    : `        ${name}: {
-            subscribe: (f: (value: ${toType(port.value)}) => void) => void,
-            unsubscribe: (f: (value: ${toType(port.value)}) => void) => void
-        }`
+                    ? `${indent(i + 1)}${name}: {
+${indent(i + 2)}send: (value: ${toType(port.value, i + 2)}) => void
+${indent(i + 1)}}`
+                    : `${indent(i + 1)}${name}: {
+${indent(i + 2)}subscribe: (f: (value: ${toType(port.value, i + 2)}) => void) => void,
+${indent(i + 2)}unsubscribe: (f: (value: ${toType(port.value, i + 2)}) => void) => void
+${indent(i + 1)}}`
             )
             .join(",\n");
     return `{
 ${portsString}
-    }`;
+${indent(i)}}`;
 }
 
-function toType(type) {
+function toType(type, i) {
     switch (type.$) {
         case "object":
-            return `{ ${Object.entries(type.value).sort(([keyA], [keyB]) => keyA.localeCompare(keyB)).map(([key, value]) => `${JSON.stringify(key)}: ${toType(value)}`).join(", ")} }`;
+            const entries = Object.entries(type.value);
+            return entries.length === 1
+                ? `{ ${toKeyValue(entries[0], 0)} }`
+                : `{
+${Object.entries(type.value).sort(([keyA], [keyB]) => keyA.localeCompare(keyB)).map(entry => toKeyValue(entry, i + 1)).join(",\n")}
+${indent(i)}}`;
         case "tuple":
-            return `[ ${Object.values(type.value).map(toType).join(", ")} ]`;
+            return `[ ${Object.values(type.value).map(value => toType(value, i)).join(", ")} ]`;
         case "list":
-            return `Array<${toType(type.value)}>`;
+            return `Array<${toType(type.value, i)}>`;
         case "array":
-            return `Array<${toType(type.value)}>`;
+            return `Array<${toType(type.value, i)}>`;
         case "oneOf":
-            return type.alternatives.map(toType).join(" | ");
+            return type.alternatives.map(alternative => toType(alternative, i)).join(" | ");
         case "primitive":
             return type.value;
         default:
             throw new Error("Unknown type.$: " + type.$);
     }
+}
+
+function toKeyValue([key, value], i) {
+    return `${indent(i)}${JSON.stringify(key)}: ${toType(value, i)}`;
 }
 
 function extract(code) {

@@ -18,11 +18,13 @@ type alias Payload =
     , string : String
     , listOfString : List String
     , listOfObject : List { nested : Int }
+    , listOfLongObject : List { first : Int, second : Float, last : Bool }
     , listOfListsOfInt : List (List Int)
     , arrayOfString : Array String
     , object : { nested : String }
+    , longObject : { first : Int, second : Float, last : Bool }
     , tuple : ( Bool, Int )
-    , triple : ( Float, String, List Int )
+    , triple : ( Float, { first : Int, second : Float, last : Bool }, List Int )
     , maybe : Maybe Int
     , json : Json.Encode.Value
     }
