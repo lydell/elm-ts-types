@@ -1,24 +1,12 @@
-export function toWindowDefinition(code) {
-}
-
-export function toStandaloneDefinition(code) {
-}
-
-export function toSeparateDefinitions(code) {
+export function generateTypeScript(code) {
     const Elm = extract(code);
-    const definitions = {};
-    toSeparateDefinitionsHelper("Elm", Elm, definitions);
-    return definitions;
+    return `declare ${generateTypeScriptHelper("Elm", Elm, "    ")}`;
 }
 
-function toSeparateDefinitionsHelper(name, exports, definitions) {
-    for (const [key, value] of Object.entries(exports)) {
-        if (key === "init") {
-            definitions[name] = toDefinition(value());
-        } else {
-            toSeparateDefinitionsHelper(`${name}.${key}`, value, definitions);
-        }
-    }
+function generateTypeScriptHelper(name, exports, indent) {
+    return `namespace ${name} {
+${Object.entries(exports).map(([key, value]) => key === "init" ? toDefinition(value()) : generateTypeScriptHelper(key, value, indent + "    ")).join("\n\n").split("\n").map(line => indent + line).join("\n")}
+}`
 }
 
 function toDefinition({flagDecoder, ports, usesNodeOption}) {
