@@ -116,7 +116,7 @@ function inject(code) {
   return preamble +
     code
         // Delay port decoder construction until our injection has run.
-        .replace(/_Platform_incomingPort\(\s+'[^']+',/g, "$& () =>")
+        .replace(/_Platform_incomingPort\(\s*'[^']+',/g, "$& () =>")
         .replace(/^_Platform_export\(/m, `${injection}\n$&`);
 }
 
