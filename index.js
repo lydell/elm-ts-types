@@ -39,7 +39,7 @@ function toArgs({flagDecoder, usesNodeOption}, i) {
     const args = [
         ...(flagDecoder === null
             ? []
-            : [["flags", toType(flagDecoder, i)]]
+            : [["flags", toType(flagDecoder, i + 1)]]
         ),
         ...(usesNodeOption
             ? [["node", "Node"]]
