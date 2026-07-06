@@ -1,7 +1,24 @@
 {
-    "private": true,
+    "name": "elm-ts-types",
+    "version": "1.0.0",
+    "description": "Generate TypeScript typings for the JavaScript interface of Elm apps.",
+    "keywords": ["Elm", "TypeScript"],
+    "author": "Simon Lydell",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/lydell/elm-ts-types.git"
+    },
+    "license": "MIT",
     "type": "module",
-    "scripts": {
-        "elm": "elm make --output elm.js test/Application.elm test/Document.elm test/DocumentNoFlagsNoPorts.elm test/Element.elm test/Html_.elm test/Sandbox.elm test/Worker.elm"
+    "exports": "./index.js",
+    "files": [
+        "index.js",
+        "index.d.ts"
+    ],
+    "devDependencies": {
+        "elm": "0.19.1-6",
+        "elm-format": "0.8.8",
+        "elm-watch": "1.2.7",
+        "typescript": "6.0.3"
     }
 }

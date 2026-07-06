@@ -1,0 +1,35 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - "main"
+  pull_request:
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 26
+
+      - id: cache-node_modules
+        uses: actions/cache@v6
+        with:
+          path: node_modules
+          key: node_modules-${{ hashFiles('package.json', 'package-lock.json') }}
+
+      - if: steps.cache-node_modules.outputs.cache-hit != 'true'
+        run: npm ci --no-audit
+
+      - run: npx elm-watch make
+
+      - run: git diff --exit-code
+
+      - run: npx tsc
+
+      - run: npx elm-format --validate .

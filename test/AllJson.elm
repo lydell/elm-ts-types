@@ -1,4 +1,4 @@
-port module Shared exposing (..)
+port module AllJson exposing (main)
 
 import Array exposing (Array)
 import Json.Encode
@@ -28,3 +28,12 @@ type alias Payload =
     , maybe : Maybe Int
     , json : Json.Encode.Value
     }
+
+
+main : Program Payload Payload Payload
+main =
+    Platform.worker
+        { init = \s -> ( s, Cmd.none )
+        , update = \_ s -> ( s, outgoing s )
+        , subscriptions = \_ -> incoming identity
+        }

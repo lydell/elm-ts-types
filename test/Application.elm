@@ -1,17 +1,21 @@
-module Application exposing (main)
+port module Application exposing (main)
 
 import Browser
-import Html
-import Shared exposing (Payload)
 
 
-main : Program Payload Payload (Maybe Payload)
+port outgoing : String -> Cmd msg
+
+
+port incoming : (String -> msg) -> Sub msg
+
+
+main : Program String String String
 main =
     Browser.application
-        { init = \payload _ _ -> ( payload, Cmd.none )
-        , update = \_ payload -> ( payload, Shared.outgoing payload )
-        , subscriptions = \_ -> Shared.incoming Just
+        { init = \s _ _ -> ( s, Cmd.none )
+        , update = \_ s -> ( s, outgoing s )
+        , subscriptions = \_ -> incoming identity
         , view = \_ -> { title = "", body = [] }
-        , onUrlChange = \_ -> Nothing
-        , onUrlRequest = \_ -> Nothing
+        , onUrlChange = \_ -> ""
+        , onUrlRequest = \_ -> ""
         }

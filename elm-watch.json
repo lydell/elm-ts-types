@@ -1,0 +1,61 @@
+{
+    "postprocess": ["elm-watch-node", "postprocess.js"],
+    "targets": {
+        "AllJson": {
+            "inputs": ["test/AllJson.elm"],
+            "output": "test/AllJson.elm.js"
+        },
+        "Application": {
+            "inputs": ["test/Application.elm"],
+            "output": "test/Application.elm.js"
+        },
+        "Document": {
+            "inputs": ["test/Document.elm"],
+            "output": "test/Document.elm.js"
+        },
+        "DocumentNoFlagsNoPorts": {
+            "inputs": ["test/DocumentNoFlagsNoPorts.elm"],
+            "output": "test/DocumentNoFlagsNoPorts.elm.js"
+        },
+        "Element": {
+            "inputs": ["test/Element.elm"],
+            "output": "test/Element.elm.js"
+        },
+        "ElementMaybeFlags": {
+            "inputs": ["test/ElementMaybeFlags.elm"],
+            "output": "test/ElementMaybeFlags.elm.js"
+        },
+        "ESM": {
+            "inputs": ["test/ESM.elm"],
+            "output": "test/ESM.elm.js"
+        },
+        "Html_": {
+            "inputs": ["test/Html_.elm"],
+            "output": "test/Html_.elm.js"
+        },
+        "MultipleInputs/Combined": {
+            "inputs": ["test/MultipleInputs/A.elm", "test/MultipleInputs/B.elm"],
+            "output": "test/MultipleInputs/Combined.elm.js"
+        },
+        "Nested/One": {
+            "inputs": ["test/Nested/One.elm"],
+            "output": "test/Nested/One.elm.js"
+        },
+        "Nested/Two": {
+            "inputs": ["test/Nested/Two.elm"],
+            "output": "test/Nested/Two.elm.js"
+        },
+        "ReadmeExample": {
+            "inputs": ["test/ReadmeExample.elm"],
+            "output": "test/ReadmeExample.elm.js"
+        },
+        "Sandbox": {
+            "inputs": ["test/Sandbox.elm"],
+            "output": "test/Sandbox.elm.js"
+        },
+        "Worker": {
+            "inputs": ["test/Worker.elm"],
+            "output": "test/Worker.elm.js"
+        }
+    }
+}

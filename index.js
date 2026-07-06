@@ -115,11 +115,12 @@ function extract(code) {
 function inject(code) {
   return preamble +
     code
-        // Delay port decoder construction until our injection has run.
-        .replace(/_Platform_incomingPort\(\s*'[^']+',/g, "$& () =>")
+        // Delay port decoder/encoder construction until our injection has run.
+        .replace(/_Platform_(?:incoming|outgoing)Port\(\s*'[^']+',/g, "$& () =>")
         .replace(/^_Platform_export\(/m, `${injection}\n$&`);
 }
 
+// Silence warning about non-optimized builds.
 const preamble = `
 var console = {
     log: globalThis.console.log,
@@ -159,7 +160,7 @@ function _Platform_setupIncomingPort(name) {
 function _Platform_setupOutgoingPort(name) {
     return {
         $: "outgoing",
-        value: _Platform_effectManagers[name].u(proxy),
+        value: _Platform_effectManagers[name].u()(proxy),
     };
 }
 

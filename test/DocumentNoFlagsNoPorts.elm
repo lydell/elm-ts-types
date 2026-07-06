@@ -1,7 +1,6 @@
 module DocumentNoFlagsNoPorts exposing (main)
 
 import Browser
-import Html
 
 
 main : Program () () ()

@@ -1,12 +1,16 @@
-module Worker exposing (main)
-
-import Shared exposing (Payload)
+port module Worker exposing (main)
 
 
-main : Program Payload Payload Payload
+port outgoing : String -> Cmd msg
+
+
+port incoming : (String -> msg) -> Sub msg
+
+
+main : Program String String String
 main =
     Platform.worker
-        { init = \payload -> ( payload, Cmd.none )
-        , update = \_ payload -> ( payload, Shared.outgoing payload )
-        , subscriptions = \_ -> Shared.incoming identity
+        { init = \s -> ( s, Cmd.none )
+        , update = \_ s -> ( s, outgoing s )
+        , subscriptions = \_ -> incoming identity
         }
