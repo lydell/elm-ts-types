@@ -23,6 +23,11 @@ jobs:
           path: node_modules
           key: node_modules-${{ hashFiles('package.json', 'package-lock.json') }}
 
+      - uses: actions/cache@v6
+        with:
+          path: ~/.elm
+          key: elm-${{ hashFiles('elm.json') }}
+
       - if: steps.cache-node_modules.outputs.cache-hit != 'true'
         run: npm ci --no-audit
 
