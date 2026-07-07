@@ -13,6 +13,10 @@
             "inputs": ["test/Document.elm"],
             "output": "test/Document.elm.js"
         },
+        "DocumentJsonValue": {
+            "inputs": ["test/DocumentJsonValue.elm"],
+            "output": "test/DocumentJsonValue.elm.js"
+        },
         "DocumentNoFlagsNoPorts": {
             "inputs": ["test/DocumentNoFlagsNoPorts.elm"],
             "output": "test/DocumentNoFlagsNoPorts.elm.js"
