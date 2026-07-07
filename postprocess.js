@@ -9,7 +9,7 @@ ${generateTypeScript(code)}
 export default Elm;
 export const Elm: typeof Elm;`;
 
-        fs.writeFileSync(`test/${targetName}.elm.d.ts`, typeDefinition);
+        fs.writeFileSync(`${import.meta.dirname}/test/${targetName}.elm.d.ts`, typeDefinition);
 
         return `const output = {}; (function(){${code}}).call(output);
 // You only need one of these, but I test both in this repo.
@@ -20,7 +20,7 @@ export const Elm = output.Elm;`;
     const typeDefinition = `// Generated file! Manual edits will be lost.
 ${generateTypeScript(code)}`;
 
-    fs.writeFileSync(`test/${targetName}.elm.d.ts`, typeDefinition);
+    fs.writeFileSync(`${import.meta.dirname}/test/${targetName}.elm.d.ts`, typeDefinition);
 
     return code;
 }
