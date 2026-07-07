@@ -2,7 +2,10 @@
     "name": "elm-ts-types",
     "version": "1.0.0",
     "description": "Generate TypeScript typings for the JavaScript interface of Elm apps.",
-    "keywords": ["Elm", "TypeScript"],
+    "keywords": [
+        "Elm",
+        "TypeScript"
+    ],
     "author": "Simon Lydell",
     "repository": {
         "type": "git",
@@ -20,5 +23,9 @@
         "elm-format": "0.8.8",
         "elm-watch": "1.2.7",
         "typescript": "6.0.3"
+    },
+    "allowScripts": {
+        "elm@0.19.2-0": true,
+        "elm-format@0.8.8": true
     }
 }
