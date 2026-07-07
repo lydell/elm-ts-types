@@ -133,8 +133,8 @@ declare namespace Elm {
 Notice how:
 
 - You are required to pass the correct flags.
-- You are required to pass a node to mount the app on, since it is an `Browser.element` program.
-- All port names are known, and whether they are `send` or `subscribe` ports, and what the types for the data flowing through the ports have.
+- You are required to pass a node to mount the app on, since it is a `Browser.element` program.
+- All port names are known, and whether they are `send` or `subscribe` ports, and what the types for the data flowing through the ports are.
 
 ## How to use the generated TypeScript types
 
@@ -182,7 +182,7 @@ Elm doesn’t do anything with the return value, but the try-catch behavior is u
         ]
 ```
 
-You might think that the two batched commands are completely independent. But if you accidentally throw an error in the `myPort` callback, that can prevent the HTTP request from happening at all. If that thrown error is wrapped up in a `Promise`, the rest of the code execution is unaffected, and the error will still appear in the browser console – as an “unhandled promise rejection” instead of as an “uncaught error”.
+You might think that the two batched commands are completely independent. But if you accidentally throw an error in the `myPort` callback, that can prevent the HTTP request from happening at all. If that thrown error is wrapped up in a `Promise`, the rest of the code execution is unaffected, and the error will still appear in the browser console – as an “unhandled promise rejection” instead of as an “uncaught error”. This reduces the “blast radius” of runtime errors in your JavaScript code – it won’t cause other Elm things to fail.
 
 If you really dislike this, or can’t use `async` functions, feel free to run `.replaceAll("Promise<void>", "void")` on the output from `generateTypeScript`.
 
