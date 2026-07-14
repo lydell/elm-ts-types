@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReadmeExample</title>
+</head>
+<body>
+    <!-- Run `elm-watch hot` to get this file: -->
+    <script src="test/ReadmeExample.elm.js"></script>
+    <script>
+        const app = Elm.ReadmeExample.init({
+            node: document.currentScript,
+            flags: { text: "first page\n\nsecond page" },
+        });
+        
+        app.ports.print.subscribe(async ({ title, pages }) => {
+            console.log(title, pages);
+            if (pages.length > 100) {
+                app.ports.printFailed.send("Too many pages.");
+            }
+        });
+    </script>
+</body>
+</html>
