@@ -133,7 +133,12 @@ const proxy = new Proxy({}, {
     get: () => proxy,
 });
 
-function _Platform_initialize(flagDecoder, args, init, update, subscriptions, stepperBuilder) {
+function _Platform_initialize(...args) {
+    // Support elm-watch in hot mode, which has a different number of arguments:
+    // elm:       flagDecoder, args,    init,          update,      subscriptions, stepperBuilder
+    // elm-watch: programType, isDebug, debugMetadata, flagDecoder, args,          init,           impl, stepperBuilder
+    const flagDecoder = args.length <= 6 ? args[0] : args[3];
+    const stepperBuilder = args[args.length - 1];
     const ports = _Platform_setupEffects({}, () => {});
     return {
         flagDecoder: flagDecoder.$ === 0 ? null : flagDecoder,
